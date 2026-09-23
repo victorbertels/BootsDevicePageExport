@@ -11,8 +11,6 @@ import streamlit as st
 from dotenv import load_dotenv
 
 load_dotenv()
-APP_PASSWORD = os.getenv("APP_PASSWORD", "")
-ACCOUNT_ID = os.getenv("ACCOUNT_ID", "").strip()
 
 from devices import (
     attach_locations,
@@ -28,7 +26,32 @@ from devices import (
 )
 from tokening import track_page
 
+# First Streamlit call, before st.secrets.
 st.set_page_config(page_title="Devices export", layout="wide")
+
+_STREAMLIT_SECRET_KEYS = ("APP_PASSWORD", "ACCOUNT_ID", "ZAPIER_WEBHOOK_URL")
+
+
+def _hydrate_env_from_streamlit_secrets() -> None:
+    """Load the Streamlit vault. That also copies string secrets into the environment."""
+    try:
+        streamlit_secrets = st.secrets
+    except Exception:
+        return
+    for key in _STREAMLIT_SECRET_KEYS:
+        if (os.getenv(key) or "").strip():
+            continue
+        try:
+            value = streamlit_secrets[key]
+        except Exception:
+            continue
+        if value is not None and str(value).strip():
+            os.environ[key] = str(value).strip()
+
+
+_hydrate_env_from_streamlit_secrets()
+APP_PASSWORD = os.getenv("APP_PASSWORD", "")
+ACCOUNT_ID = os.getenv("ACCOUNT_ID", "").strip()
 
 
 def _require_password() -> None:

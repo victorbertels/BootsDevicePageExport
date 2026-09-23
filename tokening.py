@@ -50,11 +50,12 @@ def email_from_jwt_sub(token: str) -> str:
 
 def track_page(page_name: str, token: str = "") -> None:
     """POST page, timestamp, and JWT email to Zapier when a webhook is configured."""
-    if not ZAPIER_WEBHOOK_URL:
+    webhook_url = os.getenv("ZAPIER_WEBHOOK_URL", "").strip() or ZAPIER_WEBHOOK_URL
+    if not webhook_url:
         return
     try:
         requests.post(
-            ZAPIER_WEBHOOK_URL,
+            webhook_url,
             json={
                 "page": page_name,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
